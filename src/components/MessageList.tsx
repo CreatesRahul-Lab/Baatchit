@@ -31,6 +31,19 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, isOwn }) => {
     return reaction?.users.includes(username) || false
   }
 
+  // Render system messages differently
+  if (message.type === 'system') {
+    return (
+      <div className="mb-3 text-center">
+        <div className="inline-flex items-center px-3 py-1 bg-gray-100 text-gray-600 text-sm rounded-full">
+          <span className="mr-1">ℹ️</span>
+          <span>{message.text}</span>
+          <span className="ml-2 text-xs text-gray-400">{formatTime(message.timestamp)}</span>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className={`mb-4 ${isOwn ? 'text-right' : 'text-left'}`}>
       <div className={`inline-block max-w-xs lg:max-w-md ${

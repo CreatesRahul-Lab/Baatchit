@@ -13,6 +13,7 @@ export interface Message {
   room: string
   timestamp: Date
   reactions?: Reaction[]
+  type?: 'user' | 'system' // System messages for join/leave events
 }
 
 export interface Reaction {

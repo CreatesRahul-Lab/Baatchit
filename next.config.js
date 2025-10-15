@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
-    serverComponentsExternalPackages: ['mongoose', 'socket.io', 'bad-words']
+    serverComponentsExternalPackages: ['mongoose', 'mongodb', 'socket.io', 'bad-words']
   },
   webpack: (config, { isServer }) => {
     if (isServer) {
@@ -9,6 +9,12 @@ const nextConfig = {
         'utf-8-validate': 'commonjs utf-8-validate',
         'bufferutil': 'commonjs bufferutil',
       });
+      
+      // Fix for MongoDB in serverless functions
+      config.resolve.alias = {
+        ...config.resolve.alias,
+        'mongodb': require.resolve('mongodb'),
+      };
     }
     return config;
   },
