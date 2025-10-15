@@ -112,12 +112,12 @@ vercel
 ### 3. **Environment Variables on Vercel**
 Make sure these are set in Vercel dashboard:
 ```
-MONGODB_URL=mongodb+srv://baatchit:NHx1j8BLOHrWyLjR@cluster0.utzg3y1.mongodb.net/
+MONGODB_URL=your_mongodb_connection_string
 DB_NAME=baatein-chat
 NEXTAUTH_URL=https://your-app.vercel.app
-NEXTAUTH_SECRET=bfa34e1d5b7e4a23a0c1f8d9e6b2c7d54f92a17b63e8c4d1a5b0973e2c6d8f41
-GOOGLE_CLIENT_ID=500084259755-o660l41orall3hlvto1e7h5v7s65doeh.apps.googleusercontent.com
-GOOGLE_CLIENT_SECRET=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
+NEXTAUTH_SECRET=your_nextauth_secret_here
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
 ```
 
 ### 4. **Update Google OAuth**
