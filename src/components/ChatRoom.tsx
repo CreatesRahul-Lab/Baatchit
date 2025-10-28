@@ -1,11 +1,18 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import dynamic from 'next/dynamic'
 import { useChat } from '@/contexts/ChatContext'
 import MessageList from './MessageList'
 import MessageInput from './MessageInput'
 import UserList from './UserList'
 import ConnectionStatus from './ConnectionStatus'
+
+// Load VideoCallButton only on client side (Agora SDK requires window)
+const VideoCallButton = dynamic(() => import('./VideoCallButton'), {
+  ssr: false,
+  loading: () => <div className="px-4 py-2 bg-gray-300 rounded animate-pulse">Loading...</div>
+})
 
 const ChatRoom = () => {
   const { currentRoom, username, leaveRoom, onlineUsers, isConnected } = useChat()
@@ -37,6 +44,9 @@ const ChatRoom = () => {
           
           <div className="flex items-center space-x-3">
             <ConnectionStatus />
+            
+            {/* Video Call Button */}
+            <VideoCallButton />
             
             {/* Mobile User List Toggle */}
             <button
