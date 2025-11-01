@@ -19,6 +19,11 @@ export async function GET(req: NextRequest) {
     // Get users who were active in the last 5 minutes
     const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000)
 
+    // Clean up stale users (older than 5 minutes)
+    await usersCollection.deleteMany({
+      lastSeen: { $lt: fiveMinutesAgo }
+    })
+
     const users = await usersCollection
       .find({
         room,
@@ -54,16 +59,25 @@ export async function POST(req: NextRequest) {
 
     const userId = `${username}-${room}`
     
+    // First, remove user from ALL other rooms (they can only be in one room at a time)
+    await usersCollection.deleteMany({
+      username: username,
+      room: { $ne: room }
+    })
+    
     // Check if this is a new user joining (not just updating presence)
     const existingUser = await usersCollection.findOne({ id: userId })
+    
+    // Only consider it a new join if user doesn't exist OR was inactive for more than 2 minutes
+    const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000)
     const isNewJoin = !existingUser || 
-      (existingUser.lastSeen && new Date().getTime() - new Date(existingUser.lastSeen).getTime() > 5 * 60 * 1000)
+      (existingUser.lastSeen && new Date(existingUser.lastSeen) < twoMinutesAgo)
 
     const user: UserDocument = {
       id: userId,
       username,
       room,
-      joinedAt: new Date(),
+      joinedAt: existingUser?.joinedAt || new Date(),
       lastSeen: new Date(),
       isTyping: false
     }
@@ -72,8 +86,8 @@ export async function POST(req: NextRequest) {
     await usersCollection.updateOne(
       { id: user.id },
       {
-        $set: { lastSeen: new Date(), room },
-        $setOnInsert: { id: user.id, username, joinedAt: new Date(), isTyping: false }
+        $set: { lastSeen: new Date(), room, isTyping: false },
+        $setOnInsert: { id: user.id, username, joinedAt: new Date() }
       },
       { upsert: true }
     )

@@ -5,9 +5,12 @@ import type { Message, User, Room } from '@/lib/types'
 const fetcher = (url: string) => fetch(url).then((res) => res.json())
 
 // Hook to fetch and manage messages
-export function useMessages(roomId: string | null) {
+export function useMessages(roomId: string | null, since: Date | null = null) {
+  const sinceParam = since ? `&since=${encodeURIComponent(since.toISOString())}` : ''
+  const url = roomId ? `/api/messages?room=${roomId}&limit=100${sinceParam}` : null
+
   const { data, error, mutate, isLoading } = useSWR<Message[]>(
-    roomId ? `/api/messages?room=${roomId}&limit=100` : null,
+    url,
     fetcher,
     {
       refreshInterval: 2000, // Poll every 2 seconds

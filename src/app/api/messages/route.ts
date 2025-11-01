@@ -2,13 +2,14 @@ import { NextRequest, NextResponse } from 'next/server'
 import clientPromise from '@/lib/mongodb'
 import { MessageDocument } from '@/lib/models/Message'
 
-// GET /api/messages?room={roomName}&limit={number}&before={timestamp}
+// GET /api/messages?room={roomName}&limit={number}&before={timestamp}&since={timestamp}
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url)
     const room = searchParams.get('room')
     const limit = parseInt(searchParams.get('limit') || '50')
     const before = searchParams.get('before')
+    const since = searchParams.get('since')
 
     if (!room) {
       return NextResponse.json({ error: 'Room parameter is required' }, { status: 400 })
@@ -20,8 +21,13 @@ export async function GET(req: NextRequest) {
 
     // Build query
     const query: any = { room }
+    // If since provided, only return messages after that time (inclusive)
+    if (since) {
+      query.timestamp = { ...(query.timestamp || {}), $gte: new Date(since) }
+    }
+    // If before provided, restrict to messages before that time as well
     if (before) {
-      query.timestamp = { $lt: new Date(before) }
+      query.timestamp = { ...(query.timestamp || {}), $lt: new Date(before) }
     }
 
     // Fetch messages

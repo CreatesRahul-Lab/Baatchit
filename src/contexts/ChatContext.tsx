@@ -22,11 +22,12 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
   // User and room state
   const [username, setUsername] = useState<string>('')
   const [currentRoom, setCurrentRoom] = useState<string>('')
+  const [joinedAt, setJoinedAt] = useState<Date | null>(null)
   const [isConnected, setIsConnected] = useState<boolean>(true) // Always connected with polling
   const [connectionError, setConnectionError] = useState<string | null>(null)
 
   // Use SWR hooks for data fetching
-  const { messages, sendMessage: sendMsg, addReaction: addReact, isError: messagesError } = useMessages(currentRoom || null)
+  const { messages, sendMessage: sendMsg, addReaction: addReact, isError: messagesError } = useMessages(currentRoom || null, joinedAt)
   const { users, updatePresence, leaveRoom: leaveRoomApi } = useRoomUsers(currentRoom || null)
   const { rooms } = useRooms()
   const { typingUsers, updateTypingStatus } = useTypingUsers(currentRoom || null)
@@ -65,15 +66,30 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       if (!room || !user) return
 
       try {
-        setCurrentRoom(room)
+        // Set username immediately so UI knows who is joining
         setUsername(user)
 
-        // Register user in the room
-        await fetch('/api/users', {
+        // Register user in the room and get the join timestamp
+        const res = await fetch('/api/users', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ username: user, room }),
         })
+
+        if (!res.ok) {
+          throw new Error('Failed to join room')
+        }
+
+        const userDoc = await res.json()
+        // Save join timestamp so we only fetch fresh messages
+        if (userDoc?.joinedAt) {
+          setJoinedAt(new Date(userDoc.joinedAt))
+        } else {
+          setJoinedAt(new Date())
+        }
+
+        // Only set current room after we have the joinedAt to avoid fetching history
+        setCurrentRoom(room)
 
         setConnectionError(null)
       } catch (error) {
@@ -93,8 +109,9 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
         // Clear typing status
         await updateTypingStatus(username, false)
 
-        setCurrentRoom('')
-        setUsername('')
+  setCurrentRoom('')
+  setUsername('')
+  setJoinedAt(null)
         
         // Redirect to home
         if (typeof window !== 'undefined') {

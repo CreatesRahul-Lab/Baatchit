@@ -34,6 +34,8 @@ const VideoCall: React.FC<VideoCallProps> = ({ channelName, username, uid, onLea
   const [isAudioEnabled, setIsAudioEnabled] = useState(true)
   const [isJoined, setIsJoined] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isFrontCamera, setIsFrontCamera] = useState(true)
+  const [isSwitchingCamera, setIsSwitchingCamera] = useState(false)
 
   const localVideoRef = useRef<HTMLDivElement>(null)
 
@@ -215,6 +217,67 @@ const VideoCall: React.FC<VideoCallProps> = ({ channelName, username, uid, onLea
     }
   }
 
+  // Switch camera (front/back) - Mobile only
+  const switchCamera = async () => {
+    if (!localVideoTrack || isSwitchingCamera) return
+
+    try {
+      setIsSwitchingCamera(true)
+
+      // Get available cameras
+      const devices = await AgoraRTC.getCameras()
+      
+      if (devices.length < 2) {
+        console.log('Only one camera available')
+        setIsSwitchingCamera(false)
+        return
+      }
+
+      // Store reference to old track
+      const oldTrack = localVideoTrack
+
+      // Unpublish old track first
+      await client.unpublish([oldTrack])
+
+      // Create new track with opposite facing mode
+      const newVideoTrack = await AgoraRTC.createCameraVideoTrack({
+        facingMode: isFrontCamera ? 'environment' : 'user'
+      })
+
+      // Stop and close old track after creating new one
+      oldTrack.stop()
+      oldTrack.close()
+
+      setLocalVideoTrack(newVideoTrack)
+      setIsFrontCamera(!isFrontCamera)
+
+      // Play new video in the container
+      if (localVideoRef.current) {
+        newVideoTrack.play(localVideoRef.current)
+      }
+
+      // Publish new track
+      await client.publish([newVideoTrack])
+
+      console.log(`Switched to ${isFrontCamera ? 'back' : 'front'} camera`)
+    } catch (err) {
+      console.error('Error switching camera:', err)
+      // Try to restore the original track on error
+      try {
+        const fallbackTrack = await AgoraRTC.createCameraVideoTrack()
+        setLocalVideoTrack(fallbackTrack)
+        if (localVideoRef.current) {
+          fallbackTrack.play(localVideoRef.current)
+        }
+        await client.publish([fallbackTrack])
+      } catch (restoreErr) {
+        console.error('Failed to restore camera:', restoreErr)
+      }
+    } finally {
+      setIsSwitchingCamera(false)
+    }
+  }
+
   // Leave call
   const handleLeave = async () => {
     if (localVideoTrack) {
@@ -249,77 +312,80 @@ const VideoCall: React.FC<VideoCallProps> = ({ channelName, username, uid, onLea
   return (
     <div className="fixed inset-0 bg-gray-900 z-50 flex flex-col">
       {/* Header */}
-      <div className="bg-gray-800 text-white p-4 flex justify-between items-center">
+      <div className="bg-gray-800 text-white p-3 sm:p-4 flex justify-between items-center flex-shrink-0">
         <div>
-          <h2 className="text-lg font-semibold">Video Call</h2>
-          <p className="text-sm text-gray-400">
+          <h2 className="text-base sm:text-lg font-semibold">Video Call</h2>
+          <p className="text-xs sm:text-sm text-gray-400">
             {remoteUsers.length + 1} participant{remoteUsers.length !== 0 ? 's' : ''}
           </p>
         </div>
-        <div className="text-sm text-gray-400">
+        <div className="text-xs sm:text-sm text-gray-400">
           {isJoined ? '🟢 Connected' : '🟡 Connecting...'}
         </div>
       </div>
 
-      {/* Video Grid */}
-      <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 p-4 overflow-auto">
-        {/* Local Video */}
-        <div className="relative bg-gray-800 rounded-lg overflow-hidden aspect-video">
-          <div ref={localVideoRef} className="w-full h-full"></div>
-          <div className="absolute bottom-2 left-2 bg-black bg-opacity-60 text-white px-2 py-1 rounded text-sm">
-            You ({username})
-          </div>
-          {!isVideoEnabled && (
-            <div className="absolute inset-0 flex items-center justify-center bg-gray-700">
-              <div className="text-white text-center">
-                <div className="text-4xl mb-2">📷</div>
-                <div>Camera Off</div>
-              </div>
+      {/* Video Grid - Mobile optimized scrollable layout */}
+      <div className="flex-1 overflow-y-auto overflow-x-hidden p-2 sm:p-4">
+        <div className="flex flex-col gap-2 sm:gap-3 max-w-full">
+          {/* Local Video */}
+          <div className="relative bg-gray-800 rounded-lg overflow-hidden w-full" style={{ aspectRatio: '16/9' }}>
+            <div ref={localVideoRef} className="w-full h-full"></div>
+            <div className="absolute bottom-2 left-2 bg-black bg-opacity-60 text-white px-2 py-1 rounded text-xs sm:text-sm">
+              You ({username})
             </div>
-          )}
-        </div>
-
-        {/* Remote Videos */}
-        {remoteUsers.map((user) => (
-          <div
-            key={user.uid}
-            className="relative bg-gray-800 rounded-lg overflow-hidden aspect-video"
-          >
-            <div id={`remote-video-${user.uid}`} className="w-full h-full"></div>
-            <div className="absolute bottom-2 left-2 bg-black bg-opacity-60 text-white px-2 py-1 rounded text-sm">
-              User {user.uid}
-            </div>
-            {!user.videoTrack && (
+            {!isVideoEnabled && (
               <div className="absolute inset-0 flex items-center justify-center bg-gray-700">
                 <div className="text-white text-center">
-                  <div className="text-4xl mb-2">👤</div>
-                  <div>Camera Off</div>
+                  <div className="text-3xl sm:text-4xl mb-2">📷</div>
+                  <div className="text-xs sm:text-sm">Camera Off</div>
                 </div>
               </div>
             )}
           </div>
-        ))}
 
-        {/* Empty state */}
-        {remoteUsers.length === 0 && (
-          <div className="col-span-full flex items-center justify-center text-gray-400">
-            <div className="text-center">
-              <div className="text-6xl mb-4">⏳</div>
-              <p className="text-lg">Waiting for others to join...</p>
+          {/* Remote Videos */}
+          {remoteUsers.map((user) => (
+            <div
+              key={user.uid}
+              className="relative bg-gray-800 rounded-lg overflow-hidden w-full"
+              style={{ aspectRatio: '16/9' }}
+            >
+              <div id={`remote-video-${user.uid}`} className="w-full h-full"></div>
+              <div className="absolute bottom-2 left-2 bg-black bg-opacity-60 text-white px-2 py-1 rounded text-xs sm:text-sm">
+                User {user.uid}
+              </div>
+              {!user.videoTrack && (
+                <div className="absolute inset-0 flex items-center justify-center bg-gray-700">
+                  <div className="text-white text-center">
+                    <div className="text-3xl sm:text-4xl mb-2">👤</div>
+                    <div className="text-xs sm:text-sm">Camera Off</div>
+                  </div>
+                </div>
+              )}
             </div>
-          </div>
-        )}
+          ))}
+
+          {/* Empty state */}
+          {remoteUsers.length === 0 && (
+            <div className="flex items-center justify-center text-gray-400 min-h-[200px]">
+              <div className="text-center">
+                <div className="text-4xl sm:text-6xl mb-4">⏳</div>
+                <p className="text-sm sm:text-lg">Waiting for others to join...</p>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Controls */}
-      <div className="bg-gray-800 p-4 flex justify-center gap-4">
+      {/* Controls - Fixed at bottom */}
+      <div className="bg-gray-800 p-3 sm:p-4 flex justify-center gap-2 sm:gap-4 flex-shrink-0 flex-wrap">
         <button
           onClick={toggleAudio}
-          className={`p-4 rounded-full ${
+          className={`p-3 sm:p-4 rounded-full ${
             isAudioEnabled
               ? 'bg-gray-600 hover:bg-gray-700'
               : 'bg-red-600 hover:bg-red-700'
-          } text-white transition`}
+          } text-white transition text-lg sm:text-xl`}
           title={isAudioEnabled ? 'Mute' : 'Unmute'}
         >
           {isAudioEnabled ? '🎤' : '🔇'}
@@ -327,19 +393,30 @@ const VideoCall: React.FC<VideoCallProps> = ({ channelName, username, uid, onLea
 
         <button
           onClick={toggleVideo}
-          className={`p-4 rounded-full ${
+          className={`p-3 sm:p-4 rounded-full ${
             isVideoEnabled
               ? 'bg-gray-600 hover:bg-gray-700'
               : 'bg-red-600 hover:bg-red-700'
-          } text-white transition`}
+          } text-white transition text-lg sm:text-xl`}
           title={isVideoEnabled ? 'Turn off camera' : 'Turn on camera'}
         >
           {isVideoEnabled ? '📹' : '📷'}
         </button>
 
         <button
+          onClick={switchCamera}
+          disabled={isSwitchingCamera || !isVideoEnabled}
+          className={`p-3 sm:p-4 rounded-full bg-blue-600 hover:bg-blue-700 text-white transition text-lg sm:text-xl ${
+            isSwitchingCamera || !isVideoEnabled ? 'opacity-50 cursor-not-allowed' : ''
+          }`}
+          title={isFrontCamera ? 'Switch to back camera' : 'Switch to front camera'}
+        >
+          {isSwitchingCamera ? '⏳' : '🔄📷'}
+        </button>
+
+        <button
           onClick={handleLeave}
-          className="px-6 py-4 rounded-full bg-red-600 hover:bg-red-700 text-white font-semibold transition"
+          className="px-4 py-3 sm:px-6 sm:py-4 rounded-full bg-red-600 hover:bg-red-700 text-white font-semibold transition text-sm sm:text-base"
         >
           Leave Call
         </button>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useChat } from '@/contexts/ChatContext'
 import { Message } from '@/lib/types'
 import EmojiPicker from './EmojiPicker'
@@ -13,6 +13,21 @@ interface MessageItemProps {
 const MessageItem: React.FC<MessageItemProps> = ({ message, isOwn }) => {
   const { addReaction, username } = useChat()
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
+  const pickerRef = useRef<HTMLDivElement>(null)
+  
+  // Close picker when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (pickerRef.current && !pickerRef.current.contains(event.target as Node)) {
+        setShowEmojiPicker(false)
+      }
+    }
+    
+    if (showEmojiPicker) {
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showEmojiPicker])
 
   const handleReaction = (emoji: string) => {
     addReaction(message.id, emoji)
@@ -45,7 +60,7 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, isOwn }) => {
   }
 
   return (
-    <div className={`mb-4 ${isOwn ? 'text-right' : 'text-left'}`}>
+    <div className={`mb-4 ${isOwn ? 'text-right' : 'text-left'} px-2`}>
       <div className={`inline-block max-w-xs lg:max-w-md ${
         isOwn 
           ? 'bg-blue-500 text-white rounded-l-lg rounded-tr-lg' 
@@ -80,13 +95,19 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, isOwn }) => {
           😊
         </button>
 
-        {/* Emoji picker */}
-        {showEmojiPicker && (
-          <div className="absolute top-full right-0 mt-1 z-10">
+      </div>
+      
+      {/* Emoji picker - positioned outside message bubble to avoid clipping */}
+      {showEmojiPicker && (
+        <div 
+          ref={pickerRef}
+          className={`relative mt-1 z-50 ${isOwn ? 'text-right' : 'text-left'}`}
+        >
+          <div className={`inline-block ${isOwn ? 'mr-2' : 'ml-2'}`}>
             <EmojiPicker onEmojiSelect={handleReaction} />
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Reactions */}
       {message.reactions && message.reactions.length > 0 && (
