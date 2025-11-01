@@ -326,18 +326,18 @@ const VideoCall: React.FC<VideoCallProps> = ({ channelName, username, uid, onLea
 
       {/* Video Grid - Mobile optimized scrollable layout */}
       <div className="flex-1 overflow-y-auto overflow-x-hidden p-2 sm:p-4">
-        <div className="flex flex-col gap-2 sm:gap-3 max-w-full">
+        <div className="flex flex-col gap-3 sm:gap-4 max-w-full">
           {/* Local Video */}
-          <div className="relative bg-gray-800 rounded-lg overflow-hidden w-full" style={{ aspectRatio: '16/9' }}>
+          <div className="relative bg-gray-800 rounded-lg overflow-hidden w-full min-h-[200px] sm:min-h-[280px]" style={{ aspectRatio: '16/9' }}>
             <div ref={localVideoRef} className="w-full h-full"></div>
-            <div className="absolute bottom-2 left-2 bg-black bg-opacity-60 text-white px-2 py-1 rounded text-xs sm:text-sm">
+            <div className="absolute bottom-2 left-2 bg-black bg-opacity-70 text-white px-3 py-1.5 rounded text-sm">
               You ({username})
             </div>
             {!isVideoEnabled && (
               <div className="absolute inset-0 flex items-center justify-center bg-gray-700">
                 <div className="text-white text-center">
-                  <div className="text-3xl sm:text-4xl mb-2">📷</div>
-                  <div className="text-xs sm:text-sm">Camera Off</div>
+                  <div className="text-5xl mb-3">📷</div>
+                  <div className="text-sm font-medium">Camera Off</div>
                 </div>
               </div>
             )}
@@ -347,18 +347,18 @@ const VideoCall: React.FC<VideoCallProps> = ({ channelName, username, uid, onLea
           {remoteUsers.map((user) => (
             <div
               key={user.uid}
-              className="relative bg-gray-800 rounded-lg overflow-hidden w-full"
+              className="relative bg-gray-800 rounded-lg overflow-hidden w-full min-h-[200px] sm:min-h-[280px]"
               style={{ aspectRatio: '16/9' }}
             >
               <div id={`remote-video-${user.uid}`} className="w-full h-full"></div>
-              <div className="absolute bottom-2 left-2 bg-black bg-opacity-60 text-white px-2 py-1 rounded text-xs sm:text-sm">
+              <div className="absolute bottom-2 left-2 bg-black bg-opacity-70 text-white px-3 py-1.5 rounded text-sm">
                 User {user.uid}
               </div>
               {!user.videoTrack && (
                 <div className="absolute inset-0 flex items-center justify-center bg-gray-700">
                   <div className="text-white text-center">
-                    <div className="text-3xl sm:text-4xl mb-2">👤</div>
-                    <div className="text-xs sm:text-sm">Camera Off</div>
+                    <div className="text-5xl mb-3">👤</div>
+                    <div className="text-sm font-medium">Camera Off</div>
                   </div>
                 </div>
               )}
@@ -378,14 +378,14 @@ const VideoCall: React.FC<VideoCallProps> = ({ channelName, username, uid, onLea
       </div>
 
       {/* Controls - Fixed at bottom */}
-      <div className="bg-gray-800 p-3 sm:p-4 flex justify-center gap-2 sm:gap-4 flex-shrink-0 flex-wrap">
+      <div className="bg-gray-800 p-4 flex justify-center items-center gap-3 sm:gap-4 flex-shrink-0">
         <button
           onClick={toggleAudio}
-          className={`p-3 sm:p-4 rounded-full ${
+          className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full ${
             isAudioEnabled
               ? 'bg-gray-600 hover:bg-gray-700'
               : 'bg-red-600 hover:bg-red-700'
-          } text-white transition text-lg sm:text-xl`}
+          } text-white transition flex items-center justify-center text-2xl shadow-lg`}
           title={isAudioEnabled ? 'Mute' : 'Unmute'}
         >
           {isAudioEnabled ? '🎤' : '🔇'}
@@ -393,11 +393,11 @@ const VideoCall: React.FC<VideoCallProps> = ({ channelName, username, uid, onLea
 
         <button
           onClick={toggleVideo}
-          className={`p-3 sm:p-4 rounded-full ${
+          className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full ${
             isVideoEnabled
               ? 'bg-gray-600 hover:bg-gray-700'
               : 'bg-red-600 hover:bg-red-700'
-          } text-white transition text-lg sm:text-xl`}
+          } text-white transition flex items-center justify-center text-2xl shadow-lg`}
           title={isVideoEnabled ? 'Turn off camera' : 'Turn on camera'}
         >
           {isVideoEnabled ? '📹' : '📷'}
@@ -406,19 +406,19 @@ const VideoCall: React.FC<VideoCallProps> = ({ channelName, username, uid, onLea
         <button
           onClick={switchCamera}
           disabled={isSwitchingCamera || !isVideoEnabled}
-          className={`p-3 sm:p-4 rounded-full bg-blue-600 hover:bg-blue-700 text-white transition text-lg sm:text-xl ${
+          className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-blue-500 hover:bg-blue-600 text-white transition flex items-center justify-center text-2xl shadow-lg ${
             isSwitchingCamera || !isVideoEnabled ? 'opacity-50 cursor-not-allowed' : ''
           }`}
           title={isFrontCamera ? 'Switch to back camera' : 'Switch to front camera'}
         >
-          {isSwitchingCamera ? '⏳' : '🔄📷'}
+          {isSwitchingCamera ? '⏳' : '🔄'}
         </button>
 
         <button
           onClick={handleLeave}
-          className="px-4 py-3 sm:px-6 sm:py-4 rounded-full bg-red-600 hover:bg-red-700 text-white font-semibold transition text-sm sm:text-base"
+          className="px-6 py-3 sm:px-8 sm:py-4 rounded-full bg-red-600 hover:bg-red-700 text-white font-bold transition text-base shadow-lg"
         >
-          Leave Call
+          Leave
         </button>
       </div>
     </div>
