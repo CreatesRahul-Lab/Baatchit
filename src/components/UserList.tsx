@@ -1,9 +1,13 @@
 'use client'
 
+import { useState } from 'react'
 import { useChat } from '@/contexts/ChatContext'
+import ModerationPanel from './ModerationPanel'
 
 const UserList = () => {
   const { onlineUsers, username, typingUsers } = useChat()
+  const [selectedUser, setSelectedUser] = useState<any>(null)
+  const [showModPanel, setShowModPanel] = useState(false)
 
   const formatJoinTime = (joinedAt: Date) => {
     const now = new Date()
@@ -30,8 +34,8 @@ const UserList = () => {
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
-      <div className="p-4 border-b border-gray-200 bg-gray-50">
-        <h3 className="font-semibold text-gray-800">
+      <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+        <h3 className="font-semibold text-gray-800 dark:text-gray-200">
           Online Users ({onlineUsers.length})
         </h3>
       </div>
@@ -39,7 +43,7 @@ const UserList = () => {
       {/* Users List */}
       <div className="flex-1 overflow-y-auto p-2">
         {onlineUsers.length === 0 ? (
-          <div className="text-center text-gray-500 py-8">
+          <div className="text-center text-gray-500 dark:text-gray-400 py-8">
             <div className="text-2xl mb-2">👥</div>
             <p className="text-sm">No users online</p>
           </div>
@@ -66,10 +70,10 @@ const UserList = () => {
                 return (
                   <div
                     key={user.id}
-                    className={`p-3 rounded-lg transition-colors ${
+                    className={`p-3 rounded-lg transition-colors group relative ${
                       isCurrentUser
-                        ? 'bg-blue-50 border border-blue-200'
-                        : 'hover:bg-gray-50'
+                        ? 'bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700'
+                        : 'hover:bg-gray-50 dark:hover:bg-gray-700'
                     }`}
                   >
                     <div className="flex items-center space-x-3">
@@ -84,7 +88,7 @@ const UserList = () => {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center space-x-1">
                           <span className={`font-medium text-sm truncate ${
-                            isCurrentUser ? 'text-blue-700' : 'text-gray-800'
+                            isCurrentUser ? 'text-blue-700 dark:text-blue-400' : 'text-gray-800 dark:text-gray-200'
                           }`}>
                             {user.username}
                             {isCurrentUser && ' (you)'}
@@ -102,10 +106,24 @@ const UserList = () => {
                         </div>
                         
                         {/* Join time */}
-                        <div className="text-xs text-gray-500 mt-1">
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                           Joined {formatJoinTime(user.joinedAt)}
                         </div>
                       </div>
+
+                      {/* Moderation button (only for other users) */}
+                      {!isCurrentUser && (
+                        <button
+                          onClick={() => {
+                            setSelectedUser(user)
+                            setShowModPanel(true)
+                          }}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity p-2 hover:bg-gray-200 dark:hover:bg-gray-600 rounded"
+                          title="Moderate user"
+                        >
+                          <span className="text-gray-600 dark:text-gray-300">⚙️</span>
+                        </button>
+                      )}
                     </div>
                   </div>
                 )
@@ -115,8 +133,8 @@ const UserList = () => {
       </div>
 
       {/* Room Info */}
-      <div className="p-4 border-t border-gray-200 bg-gray-50">
-        <div className="text-xs text-gray-600 space-y-1">
+      <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+        <div className="text-xs text-gray-600 dark:text-gray-400 space-y-1">
           <div className="flex justify-between">
             <span>Total messages:</span>
             <span className="font-medium">-</span>
@@ -127,6 +145,17 @@ const UserList = () => {
           </div>
         </div>
       </div>
+
+      {/* Moderation Panel */}
+      {showModPanel && selectedUser && (
+        <ModerationPanel
+          targetUser={selectedUser}
+          onClose={() => {
+            setShowModPanel(false)
+            setSelectedUser(null)
+          }}
+        />
+      )}
     </div>
   )
 }

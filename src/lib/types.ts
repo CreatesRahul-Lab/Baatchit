@@ -4,6 +4,10 @@ export interface User {
   room: string
   joinedAt: Date
   isTyping?: boolean
+  role?: 'admin' | 'moderator' | 'user'
+  isBanned?: boolean
+  isMuted?: boolean
+  mutedUntil?: Date
 }
 
 export interface Message {
@@ -14,6 +18,14 @@ export interface Message {
   timestamp: Date
   reactions?: Reaction[]
   type?: 'user' | 'system' // System messages for join/leave events
+  edited?: boolean
+  editedAt?: Date
+  deleted?: boolean
+  deletedAt?: Date
+  editHistory?: Array<{
+    text: string
+    editedAt: Date
+  }>
 }
 
 export interface Reaction {
@@ -29,6 +41,11 @@ export interface Room {
   userCount: number
   createdAt: Date
   isActive: boolean
+  isDM?: boolean
+  participants?: string[] // For DM rooms: list of usernames
+  owner?: string // Room owner username
+  moderators?: string[] // List of moderator usernames
+  bannedUsers?: string[] // List of banned usernames
 }
 
 export interface ChatContextType {
@@ -60,6 +77,8 @@ export interface ChatContextType {
   startTyping: () => void
   stopTyping: () => void
   addReaction: (messageId: string, emoji: string) => void
+  editMessage: (messageId: string, newText: string) => void
+  deleteMessage: (messageId: string) => void
 }
 
 export interface ServerToClientEvents {

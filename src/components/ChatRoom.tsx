@@ -7,6 +7,7 @@ import MessageList from './MessageList'
 import MessageInput from './MessageInput'
 import UserList from './UserList'
 import ConnectionStatus from './ConnectionStatus'
+import DMList from './DMList'
 
 // Load VideoCallButton only on client side (Agora SDK requires window)
 const VideoCallButton = dynamic(() => import('./VideoCallButton'), {
@@ -17,6 +18,7 @@ const VideoCallButton = dynamic(() => import('./VideoCallButton'), {
 const ChatRoom = () => {
   const { currentRoom, username, leaveRoom, onlineUsers, isConnected } = useChat()
   const [showUserList, setShowUserList] = useState(false)
+  const [showDMList, setShowDMList] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   // Auto-scroll to bottom when new messages arrive
@@ -29,9 +31,9 @@ const ChatRoom = () => {
   }
 
   return (
-    <div className="max-w-6xl mx-auto bg-white rounded-lg shadow-lg overflow-hidden">
+    <div className="max-w-6xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden transition-colors">
       {/* Header */}
-      <div className="bg-blue-600 text-white p-4">
+      <div className="bg-blue-600 dark:bg-blue-700 text-white p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <div>
@@ -44,6 +46,16 @@ const ChatRoom = () => {
           
           <div className="flex items-center space-x-3">
             <ConnectionStatus />
+            
+            {/* DM Button */}
+            <button
+              onClick={() => setShowDMList(true)}
+              className="bg-blue-700 hover:bg-blue-800 px-3 py-2 rounded text-sm transition-colors flex items-center gap-2"
+              title="Direct Messages"
+            >
+              <span>💬</span>
+              <span className="hidden md:inline">DMs</span>
+            </button>
             
             {/* Video Call Button */}
             <VideoCallButton />
@@ -72,19 +84,19 @@ const ChatRoom = () => {
         {/* Messages Area */}
         <div className="flex-1 flex flex-col">
           {/* Messages List */}
-          <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
+          <div className="flex-1 overflow-y-auto p-4 bg-gray-50 dark:bg-gray-900">
             <MessageList />
             <div ref={messagesEndRef} />
           </div>
           
           {/* Message Input */}
-          <div className="border-t border-gray-200 p-4 bg-white">
+          <div className="border-t border-gray-200 dark:border-gray-700 p-4 bg-white dark:bg-gray-800">
             <MessageInput />
           </div>
         </div>
 
         {/* Desktop User List */}
-        <div className="hidden lg:block w-64 border-l border-gray-200 bg-white">
+        <div className="hidden lg:block w-64 border-l border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
           <UserList />
         </div>
       </div>
@@ -92,12 +104,12 @@ const ChatRoom = () => {
       {/* Mobile User List Overlay */}
       {showUserList && (
         <div className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-50">
-          <div className="absolute right-0 top-0 h-full w-64 bg-white shadow-lg">
-            <div className="p-4 border-b border-gray-200 flex justify-between items-center">
-              <h3 className="font-semibold">Online Users</h3>
+          <div className="absolute right-0 top-0 h-full w-64 bg-white dark:bg-gray-800 shadow-lg">
+            <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+              <h3 className="font-semibold dark:text-white">Online Users</h3>
               <button
                 onClick={() => setShowUserList(false)}
-                className="text-gray-500 hover:text-gray-700"
+                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
               >
                 ✕
               </button>
@@ -106,6 +118,9 @@ const ChatRoom = () => {
           </div>
         </div>
       )}
+
+      {/* DM List Modal */}
+      {showDMList && <DMList onClose={() => setShowDMList(false)} />}
     </div>
   )
 }

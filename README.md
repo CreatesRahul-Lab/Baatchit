@@ -10,6 +10,9 @@ A **fully serverless** real-time chat application built with Next.js and Socket.
 
 > **🚀 Serverless Architecture**: No separate backend server needed! Socket.io runs as Next.js API routes. One command, one port, one deploy!
 
+
+
+
 ## ✨ Features
 
 ### Core Features

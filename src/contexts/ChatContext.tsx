@@ -173,6 +173,60 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
     console.log('Message added:', message)
   }, [])
 
+  // Edit message
+  const editMessage = useCallback(
+    async (messageId: string, newText: string) => {
+      if (!currentRoom || !username) return
+
+      try {
+        const response = await fetch(`/api/messages/${messageId}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ text: newText, username }),
+        })
+
+        if (!response.ok) {
+          const error = await response.json()
+          throw new Error(error.error || 'Failed to edit message')
+        }
+
+        // Trigger re-fetch
+        await fetch(`/api/messages?room=${currentRoom}`)
+      } catch (error) {
+        console.error('Error editing message:', error)
+        throw error
+      }
+    },
+    [currentRoom, username]
+  )
+
+  // Delete message
+  const deleteMessage = useCallback(
+    async (messageId: string) => {
+      if (!currentRoom || !username) return
+
+      try {
+        const response = await fetch(`/api/messages/${messageId}?username=${username}`, {
+          method: 'DELETE',
+        })
+
+        if (!response.ok) {
+          const error = await response.json()
+          throw new Error(error.error || 'Failed to delete message')
+        }
+
+        // Trigger re-fetch
+        await fetch(`/api/messages?room=${currentRoom}`)
+      } catch (error) {
+        console.error('Error deleting message:', error)
+        throw error
+      }
+    },
+    [currentRoom, username]
+  )
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -204,6 +258,8 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
     startTyping,
     stopTyping,
     addReaction,
+    editMessage,
+    deleteMessage,
   }
 
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>

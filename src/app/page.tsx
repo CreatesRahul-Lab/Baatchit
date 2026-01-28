@@ -11,10 +11,10 @@ export default function Home() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="text-center mb-8">
-        <h1 className="text-4xl font-bold text-gray-800 mb-2">
+        <h1 className="text-4xl font-bold text-gray-800 dark:text-white mb-2">
           🗣️ Baatein
         </h1>
-        <p className="text-lg text-gray-600">
+        <p className="text-lg text-gray-600 dark:text-gray-300">
           Real-time chat rooms for meaningful conversations
         </p>
       </div>

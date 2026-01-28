@@ -13,6 +13,14 @@ export interface MessageDocument {
     users: string[]
     count: number
   }>
+  edited?: boolean
+  editedAt?: Date
+  deleted?: boolean
+  deletedAt?: Date
+  editHistory?: Array<{
+    text: string
+    editedAt: Date
+  }>
 }
 
 export interface UserDocument {
@@ -34,6 +42,8 @@ export interface RoomDocument {
   createdAt: Date
   isActive: boolean
   lastActivity: Date
+  isDM?: boolean
+  participants?: string[] // For DM rooms: list of usernames
 }
 
 export interface TypingStatusDocument {

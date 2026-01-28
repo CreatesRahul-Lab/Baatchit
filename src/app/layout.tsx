@@ -1,9 +1,7 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
-import { ChatProvider } from '@/contexts/ChatContext'
-import Toaster from '@/components/ui/Toaster'
-import AuthProvider from '@/components/AuthProvider'
+import ClientProviders from '@/components/ClientProviders'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -25,16 +23,11 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
-        <AuthProvider>
-          <ChatProvider>
-            <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-              {children}
-            </main>
-            <Toaster />
-          </ChatProvider>
-        </AuthProvider>
+        <ClientProviders>
+          {children}
+        </ClientProviders>
       </body>
     </html>
   )
